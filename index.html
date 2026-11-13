@@ -1,649 +1,180 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>StaGra: MRI Segmentation via Training-Free Statistical-Graph Framework</title>
-  <meta name="description" content="StaGra combines statistical intensity modeling and 3D graph-cut refinement to segment brain tumor subregions from multimodal MRI without training a shared segmentation model across subjects.">
-
-  <!-- Open Graph / Social Preview khi chia sẻ link tại hội nghị -->
+  <meta name="theme-color" content="#fafbfd">
+  <title>StaGra — Training-Free Statistical-Graph MRI Segmentation</title>
+  <meta name="description" content="StaGra combines per-volume statistical intensity modeling and 3D graph-cut refinement for multimodal brain tumor MRI segmentation.">
   <meta property="og:title" content="StaGra: MRI Segmentation via Training-Free Statistical-Graph Framework">
-  <meta property="og:description" content="Accepted at SoICT 2026. Training-free per-volume statistical modeling and 3D graph-cut refinement for multimodal brain tumor MRI segmentation.">
+  <meta property="og:description" content="Accepted at SoICT 2026. Per-volume statistical modeling and 3D graph-cut refinement for multimodal brain MRI.">
   <meta property="og:type" content="website">
-
-  <!-- Google Fonts & Bulma CSS (chuẩn giao diện Nerfies) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Castoro&family=Google+Sans:wght@400;500;700&family=Noto+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600&family=Noto+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./static/css/index.css">
+  <script src="./static/js/main.js" defer></script>
 </head>
 <body>
+  <a class="skip-link" href="#main-content" data-i18n="skip">Skip to content</a>
+  <div class="reading-progress" aria-hidden="true"><span id="reading-progress-bar"></span></div>
 
-  <!-- Thanh điều hướng nhanh + Nút chuyển ngôn ngữ EN / VI luôn hiển thị trên mobile -->
-  <nav class="navbar is-light is-fixed-top quick-nav" role="navigation" aria-label="main navigation">
-    <div class="container is-max-desktop">
-      <div class="navbar-brand is-align-items-center">
-        <a class="navbar-item has-text-weight-bold" href="#top">StaGra</a>
-
-        <!-- Bộ chuyển đổi ngôn ngữ EN / VI -->
-        <div class="lang-switcher" role="group" aria-label="Language switcher">
-          <button type="button" id="btn-en" class="lang-btn active" onclick="setLanguage('en')" title="English">
-            EN
-          </button>
-          <button type="button" id="btn-vi" class="lang-btn" onclick="setLanguage('vi')" title="Tiếng Việt">
-            VI
-          </button>
-        </div>
-
-        <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="navMenu">
-          <span aria-hidden="true"></span>
-          <span aria-hidden="true"></span>
-          <span aria-hidden="true"></span>
-        </a>
+  <header class="site-header">
+    <nav class="nav-pill" aria-label="Primary navigation" data-i18n-aria-label="nav_aria">
+      <a class="brand" href="#top" aria-label="StaGra home"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span><span>StaGra</span></a>
+      <div class="nav-links">
+        <a href="#overview" data-i18n="nav_overview">Overview</a>
+        <a href="#ideas" data-i18n="nav_ideas">Key ideas</a>
+        <a href="#method" data-i18n="nav_method">Method</a>
+        <a href="#evaluation" data-i18n="nav_evaluation">Evaluation</a>
+        <a href="#resources" data-i18n="nav_resources">Resources</a>
       </div>
-
-      <div id="navMenu" class="navbar-menu">
-        <div class="navbar-end">
-          <a class="navbar-item" href="#overview" data-i18n="nav_overview">Overview</a>
-          <a class="navbar-item" href="#key-ideas" data-i18n="nav_ideas">Key Ideas</a>
-          <a class="navbar-item" href="#method" data-i18n="nav_method">Method</a>
-          <a class="navbar-item" href="#evaluation" data-i18n="nav_eval">Evaluation</a>
-          <a class="navbar-item" href="#limitations" data-i18n="nav_limit">Limitations</a>
-          <a class="navbar-item" href="#bibtex">BibTeX</a>
-        </div>
+      <div class="lang-switcher" role="group" aria-label="Language" data-i18n-aria-label="language_aria">
+        <button class="lang-button is-active" type="button" data-lang="en" aria-pressed="true">EN</button>
+        <button class="lang-button" type="button" data-lang="vi" aria-pressed="false">VI</button>
       </div>
-    </div>
-  </nav>
+    </nav>
+  </header>
 
-  <!-- HERO SECTION -->
-  <section id="top" class="hero publication-hero">
-    <div class="hero-body">
-      <div class="container is-max-desktop">
-        <div class="columns is-centered">
-          <div class="column has-text-centered">
-
-            <div class="venue-badge mb-3">
-              <span class="tag is-info is-medium is-rounded has-text-weight-semibold" data-i18n="venue_line">
-                Accepted at SoICT 2026
-              </span>
-            </div>
-
-            <h1 class="title is-1 publication-title">
-              <span class="project-acronym">StaGra:</span> MRI Segmentation via Training-Free Statistical-Graph Framework
-            </h1>
-
-            <!-- Danh sách tác giả -->
-            <div class="is-size-5 publication-authors">
-              <span class="author-block">Thanh-Tin Bui<sup>1,3*</sup>,</span>
-              <span class="author-block">Hoang-Hiep Mai<sup>1,3*</sup>,</span>
-              <span class="author-block">Van-Duc Tran<sup>1,2*</sup>,</span>
-              <span class="author-block">Anh-Khoa Nguyen-Van<sup>1,2*</sup>,</span>
-              <span class="author-block">Duy-Tan Nguyen<sup>1,2*</sup>,</span>
-              <span class="author-block">Loi Nguyen Khanh<sup>1,2</sup></span>
-            </div>
-
-            <!-- Đơn vị công tác -->
-            <div class="is-size-6 publication-affiliations mt-2">
-              <span class="affiliation-block"><sup>1</sup>HCMUT EE Machine Learning &amp; IoT Lab</span><br>
-              <span class="affiliation-block"><sup>2</sup>Ho Chi Minh City University of Technology, VNU-HCM, Vietnam</span><br>
-              <span class="affiliation-block"><sup>3</sup>Ho Chi Minh City University of Science, VNU-HCM, Vietnam</span>
-            </div>
-
-            <div class="is-size-7 has-text-grey mt-2" data-i18n="equal_contrib">
-              <sup>*</sup>Equal contribution as first authors.
-            </div>
-
-            <!-- Các nút truy cập nhanh -->
-            <div class="column has-text-centered mt-4">
-              <div class="publication-links">
-                <span class="link-block">
-                  <a href="#resources" class="external-link button is-normal is-rounded is-dark">
-                    <span class="icon"><i class="fas fa-file-pdf"></i></span>
-                    <span data-i18n="btn_paper">Paper</span>
-                  </a>
-                </span>
-                <span class="link-block">
-                  <a href="#resources" class="external-link button is-normal is-rounded is-dark">
-                    <span class="icon"><i class="fab fa-github"></i></span>
-                    <span data-i18n="btn_code">Code</span>
-                  </a>
-                </span>
-                <span class="link-block">
-                  <a href="#resources" class="external-link button is-normal is-rounded is-dark">
-                    <span class="icon"><i class="fas fa-chalkboard"></i></span>
-                    <span data-i18n="btn_poster">Poster</span>
-                  </a>
-                </span>
-                <span class="link-block">
-                  <a href="#bibtex" class="external-link button is-normal is-rounded is-dark">
-                    <span class="icon"><i class="fas fa-quote-right"></i></span>
-                    <span>BibTeX</span>
-                  </a>
-                </span>
-              </div>
-            </div>
-
-            <!-- One-sentence summary -->
-            <div class="box summary-callout mt-4">
-              <p class="is-size-5-desktop is-size-6-mobile has-text-weight-medium" data-i18n="one_sentence_summary">
-                StaGra combines statistical intensity modeling and 3D graph-cut refinement to segment brain tumor subregions from multimodal MRI without training a shared segmentation model across subjects.
-              </p>
-            </div>
-
+  <main id="main-content">
+    <section class="hero" id="top" aria-labelledby="page-title">
+      <div class="hero-mesh" aria-hidden="true"></div>
+      <div class="shell hero-grid">
+        <div class="hero-copy reveal">
+          <div class="eyebrow-row">
+            <span class="venue-badge"><i aria-hidden="true"></i><span data-i18n="venue">Accepted at SoICT 2026</span></span>
+            <span class="eyebrow-note" data-i18n="hero_note">Interpretable · Per-volume · Training-free</span>
           </div>
-        </div>
-      </div>
-    </div>
-  </section>
+          <h1 id="page-title"><span class="title-accent">StaGra</span><span class="title-separator">:</span> <span data-i18n="paper_title">MRI Segmentation via Training-Free Statistical-Graph Framework</span></h1>
+          <p class="hero-summary" data-i18n="summary">StaGra combines statistical intensity modeling and 3D graph-cut refinement to segment brain tumor subregions from multimodal MRI without training a shared segmentation model across subjects.</p>
 
-  <!-- TEASER FIGURE -->
-  <section class="hero teaser">
-    <div class="container is-max-desktop">
-      <div class="hero-body pt-0">
-        <figure class="figure-frame">
-          <img src="./static/images/teaser.png" alt="StaGra Multimodal MRI Brain Tumor Segmentation Overview"
-               onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-          <div class="figure-placeholder" style="display: none;">
-            <div>
-              <i class="fas fa-brain fa-2x mb-2 has-text-grey"></i>
-              <p class="has-text-weight-semibold">Teaser Figure Placeholder</p>
-              <p class="is-size-7 has-text-grey">Upload your visual overview to <code>static/images/teaser.png</code> (Multimodal MRI inputs: T1, T1ce, T2, FLAIR &rarr; 3D WT, TC, ET masks).</p>
-            </div>
+          <div class="authors" aria-label="Authors" data-i18n-aria-label="authors_aria">
+            <span>Thanh-Tin Bui<sup>1,3*</sup></span><span>Hoang-Hiep Mai<sup>1,3*</sup></span><span>Van-Duc Tran<sup>1,2*</sup></span><span>Anh-Khoa Nguyen-Van<sup>1,2*</sup></span><span>Duy-Tan Nguyen<sup>1,2*</sup></span><span>Loi Nguyen Khanh<sup>1,2</sup></span>
           </div>
-          <figcaption class="has-text-centered is-size-6 mt-3 has-text-grey-dark" data-i18n="teaser_caption">
-            <strong>StaGra Overview:</strong> Per-volume statistical intensity modeling and 3D graph-cut spatial refinement applied to multimodal MRI (T1, T1ce, T2, FLAIR) to delineate whole-tumor (WT), tumor-core (TC), and enhancing-tumor (ET) regions without cross-subject training.
-          </figcaption>
-        </figure>
-      </div>
-    </div>
-  </section>
+          <details class="affiliations">
+            <summary data-i18n="affiliations_label">Authors & affiliations</summary>
+            <div><p><sup>1</sup> HCMUT EE Machine Learning &amp; IoT Lab</p><p><sup>2</sup> Ho Chi Minh City University of Technology, VNU-HCM, Vietnam</p><p><sup>3</sup> Ho Chi Minh City University of Science, VNU-HCM, Vietnam</p><p class="equal-note"><sup>*</sup> <span data-i18n="equal_contribution">Equal contribution as first authors.</span></p></div>
+          </details>
 
-  <!-- OVERVIEW -->
-  <section id="overview" class="section">
-    <div class="container is-max-desktop">
-      <div class="columns is-centered has-text-centered">
-        <div class="column is-four-fifths">
-          <h2 class="title is-3" data-i18n="overview_title">Overview</h2>
-          <div class="content has-text-justified">
-            <p data-i18n="overview_p1">
-              Brain tumor segmentation requires identifying structures with overlapping intensities and irregular boundaries. StaGra explores a statistical approach that fits an individual MRI volume and uses spatial relationships to refine the resulting segmentation.
-            </p>
-            <p data-i18n="overview_p2">
-              The framework takes four MRI sequences—<strong>T1</strong>, <strong>contrast-enhanced T1 (T1ce)</strong>, <strong>T2</strong>, and <strong>FLAIR</strong>—and operates in two stages. First, multi-planar adaptive thresholding identifies a candidate tumor region. Within this region, kernel density estimation provides starting points for a weighted Gaussian mixture model. A three-dimensional graph-cut procedure then refines voxel assignments using a spatial energy model. Intensity-based tissue mapping and post-processing produce whole-tumor, tumor-core, and enhancing-tumor masks.
-            </p>
-            <div class="notification is-info is-light" data-i18n="overview_p3">
-              Here, <strong>“training-free”</strong> refers to the absence of cross-subject model training. StaGra still estimates mixture parameters for each volume and uses manually specified hyperparameters and tissue-assignment rules.
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- KEY IDEAS -->
-  <section id="key-ideas" class="section has-background-light">
-    <div class="container is-max-desktop">
-      <h2 class="title is-3 has-text-centered mb-5" data-i18n="ideas_title">Key Ideas</h2>
-      <div class="columns is-multiline">
-
-        <div class="column is-one-third">
-          <div class="card idea-card">
-            <div class="card-content">
-              <div class="idea-icon mb-3"><i class="fas fa-crosshairs"></i></div>
-              <h3 class="title is-5" data-i18n="idea1_title">1. Localize before modeling</h3>
-              <p class="content is-size-6" data-i18n="idea1_body">
-                A candidate region focuses the statistical analysis on potentially abnormal tissue. Adaptive thresholding across three orthogonal views combines complementary spatial information before volumetric filtering.
-              </p>
-            </div>
+          <div class="hero-actions" aria-label="Project resources" data-i18n-aria-label="resources_aria">
+            <span class="resource-action is-disabled" data-resource="paper"><span class="action-icon" aria-hidden="true">↗</span><span data-i18n="paper_pdf">Paper PDF</span><small data-i18n="coming_soon">Coming soon</small></span>
+            <span class="resource-action is-disabled" data-resource="code"><span class="action-icon mono" aria-hidden="true">&lt;/&gt;</span><span data-i18n="github_code">GitHub Code</span><small data-i18n="coming_soon">Coming soon</small></span>
+            <span class="resource-action is-disabled" data-resource="poster"><span class="action-icon" aria-hidden="true">▤</span><span data-i18n="conference_poster">Conference Poster</span><small data-i18n="coming_soon">Coming soon</small></span>
+            <a class="resource-action" href="#citation"><span class="action-icon" aria-hidden="true">“</span><span data-i18n="bibtex">BibTeX</span><small data-i18n="copy_citation">Copy citation</small></a>
           </div>
         </div>
 
-        <div class="column is-one-third">
-          <div class="card idea-card">
-            <div class="card-content">
-              <div class="idea-icon mb-3"><i class="fas fa-chart-area"></i></div>
-              <h3 class="title is-5" data-i18n="idea2_title">2. Initialize from image density</h3>
-              <p class="content is-size-6" data-i18n="idea2_body">
-                Kernel density estimation identifies high-density locations in the multimodal feature space. These locations initialize the Gaussian mixture model, which estimates tissue-related intensity distributions within the candidate region.
-              </p>
-            </div>
+        <aside class="hero-visual reveal" aria-label="StaGra method at a glance" data-i18n-aria-label="hero_visual_aria">
+          <div class="visual-topline"><span class="mono-label" data-i18n="at_glance">METHOD AT A GLANCE</span><span class="visual-index">01—03</span></div>
+          <div class="brain-orbit" aria-hidden="true">
+            <svg viewBox="0 0 420 340">
+              <defs><radialGradient id="brainWash" cx="48%" cy="42%" r="60%"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#e9eef8"/></radialGradient><filter id="softGlow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="10"/></filter></defs>
+              <circle cx="210" cy="170" r="147" fill="none" stroke="#d8e0ed" stroke-dasharray="3 8"/><circle cx="210" cy="170" r="119" fill="#1d4ed8" opacity=".07" filter="url(#softGlow)"/>
+              <path d="M211 56c-26-25-67-20-82 9-31-5-57 21-51 51-28 15-32 52-10 73-12 28 5 62 35 67 12 29 47 39 72 21 12 12 24 17 36 17s25-5 37-17c25 18 60 8 72-21 30-5 47-39 35-67 22-21 18-58-10-73 6-30-20-56-51-51-15-29-56-34-83-9Z" fill="url(#brainWash)" stroke="#9caec5" stroke-width="2"/>
+              <g fill="none" stroke="#b9c6d6" stroke-width="2" stroke-linecap="round" opacity=".78"><path d="M201 72c-20 18-23 42-12 60-24 5-36 25-30 47-21 7-30 28-21 47M221 72c21 16 24 40 13 60 26 8 35 29 27 49 23 9 29 32 17 50M108 125c20 2 35 14 40 32M104 198c18-9 37-6 50 7M313 124c-21 2-36 15-41 33M315 199c-19-9-38-6-51 8M211 59v231"/></g>
+              <path d="M248 137c34-9 62 13 61 47-1 35-31 62-72 55-39-7-56-41-38-71 10-17 26-27 49-31Z" fill="#0d9488" opacity=".82"/><path d="M253 153c24-5 43 12 40 35-3 25-25 40-50 32-22-7-30-30-18-48 7-10 15-16 28-19Z" fill="#d97706" opacity=".92"/><path d="M260 169c13-2 22 8 19 20-3 13-15 20-27 14-10-5-13-17-6-26 4-5 8-7 14-8Z" fill="#e11d48"/>
+            </svg>
+            <span class="orbit-tag orbit-tag-wt"><b>WT</b><small data-i18n="wt_short">Whole tumor</small></span><span class="orbit-tag orbit-tag-tc"><b>TC</b><small data-i18n="tc_short">Tumor core</small></span><span class="orbit-tag orbit-tag-et"><b>ET</b><small data-i18n="et_short">Enhancing</small></span>
           </div>
-        </div>
-
-        <div class="column is-one-third">
-          <div class="card idea-card">
-            <div class="card-content">
-              <div class="idea-icon mb-3"><i class="fas fa-project-diagram"></i></div>
-              <h3 class="title is-5" data-i18n="idea3_title">3. Refine with 3D spatial structure</h3>
-              <p class="content is-size-6" data-i18n="idea3_body">
-                Voxelwise statistical assignments can be spatially fragmented. StaGra combines their data costs with contrast-sensitive neighborhood penalties and applies graph-cut moves to seek a lower-energy volumetric labeling.
-              </p>
-            </div>
-          </div>
-        </div>
-
+          <div class="visual-flow" aria-hidden="true"><span><b>01</b><small data-i18n="flow_localize">Localize</small></span><i></i><span><b>02</b><small data-i18n="flow_model">Model</small></span><i></i><span><b>03</b><small data-i18n="flow_refine">Refine</small></span></div>
+          <p class="visual-caption" data-i18n="visual_caption">Four MRI sequences in. Three standard BraTS regions out—without cross-subject model training.</p>
+        </aside>
       </div>
-    </div>
-  </section>
+      <div class="shell modality-strip reveal" aria-label="MRI input sequences" data-i18n-aria-label="modalities_aria">
+        <span class="strip-label" data-i18n="inputs">MRI INPUTS</span><span class="modality modality-t1"><b>T1</b><small data-i18n="t1_desc">Anatomy</small></span><span class="modality modality-t1ce"><b>T1ce</b><small data-i18n="t1ce_desc">Enhancement</small></span><span class="modality modality-t2"><b>T2</b><small data-i18n="t2_desc">Fluid-sensitive</small></span><span class="modality modality-flair"><b>FLAIR</b><small data-i18n="flair_desc">Lesion contrast</small></span><span class="strip-arrow" aria-hidden="true">→</span><span class="strip-output"><b>WT · TC · ET</b><small data-i18n="outputs">Segmented regions</small></span>
+      </div>
+    </section>
 
-  <!-- METHOD -->
-  <section id="method" class="section">
-    <div class="container is-max-desktop">
-      <div class="columns is-centered">
-        <div class="column is-four-fifths">
-          <h2 class="title is-3 has-text-centered" data-i18n="method_title">Method</h2>
-
-          <!-- Pipeline Diagram -->
-          <figure class="figure-frame mb-5">
-            <img src="./static/images/pipeline.png" alt="StaGra Two-Stage Pipeline Diagram"
-                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-            <div class="figure-placeholder" style="display: none;">
-              <div>
-                <i class="fas fa-sitemap fa-2x mb-2 has-text-grey"></i>
-                <p class="has-text-weight-semibold">Method Pipeline Figure Placeholder</p>
-                <p class="is-size-7 has-text-grey">Upload your architecture diagram to <code>static/images/pipeline.png</code> (Stage 1: Candidate localization &rarr; Stage 2: KDE + Weighted GMM + 3D Graph-Cut).</p>
-              </div>
-            </div>
-          </figure>
-
-          <div class="content has-text-justified">
-            <h3 class="title is-4" data-i18n="stage1_title">Stage 1 — Candidate localization</h3>
-            <p data-i18n="stage1_p1">
-              FLAIR images are processed across three orthogonal orientations. Adaptive thresholding and intensity rules produce candidate masks, which are combined by weighted voting. Volumetric filtering and morphological operations consolidate the candidate region of interest.
-            </p>
-            <p data-i18n="stage1_p2">
-              This region defines the spatial domain for the next stage. Candidate coverage therefore matters: tumor tissue excluded at this stage cannot be recovered by subsequent modeling restricted to that region.
-            </p>
-
-            <h3 class="title is-4 mt-5" data-i18n="stage2_title">Stage 2 — Statistical modeling and spatial refinement</h3>
-            <p data-i18n="stage2_p1">
-              Each active voxel is represented by its normalized T1, T1ce, T2, and FLAIR intensities. Importance weighting and feature standardization prepare the multimodal features for density estimation and mixture fitting.
-            </p>
-            <p data-i18n="stage2_p2">
-              Kernel density peaks initialize a five-component Gaussian mixture model. Weighted expectation–maximization estimates the mixture parameters for the current volume. Fixed intensity rules associate the resulting components with tissue categories and provide additional preferences for voxel labeling.
-            </p>
-            <p data-i18n="stage2_p3">
-              Spatial refinement uses a contrast-sensitive Potts model over neighboring voxels in three dimensions. Unary costs encode statistical evidence, while pairwise costs penalize label differences according to local feature contrast. Alpha-expansion graph-cut moves approximately minimize this multi-label energy; they do not guarantee an exact global optimum.
-            </p>
-
-            <h3 class="title is-4 mt-5" data-i18n="output_title">Output regions</h3>
-            <p data-i18n="output_intro">The final output is expressed using three standard BraTS evaluation regions:</p>
-
-            <div class="table-container">
-              <table class="table is-bordered is-striped is-fullwidth">
-                <thead>
-                  <tr>
-                    <th data-i18n="tbl_col_region">Region</th>
-                    <th data-i18n="tbl_col_abbr">Abbreviation</th>
-                    <th data-i18n="tbl_col_def">Definition</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td><strong data-i18n="tbl_wt_name">Whole tumor</strong></td>
-                    <td><code>WT</code></td>
-                    <td data-i18n="tbl_wt_def">Edema, necrotic or non-enhancing core, and enhancing tumor</td>
-                  </tr>
-                  <tr>
-                    <td><strong data-i18n="tbl_tc_name">Tumor core</strong></td>
-                    <td><code>TC</code></td>
-                    <td data-i18n="tbl_tc_def">Necrotic or non-enhancing core and enhancing tumor</td>
-                  </tr>
-                  <tr>
-                    <td><strong data-i18n="tbl_et_name">Enhancing tumor</strong></td>
-                    <td><code>ET</code></td>
-                    <td data-i18n="tbl_et_def">Enhancing tumor component</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
+    <section class="section overview-section" id="overview" aria-labelledby="overview-title">
+      <div class="shell section-grid">
+        <div class="section-heading reveal"><p class="section-kicker"><span>01</span><span data-i18n="overview_kicker">Problem & approach</span></p><h2 id="overview-title" data-i18n="overview_title">Fit the volume.<br>Respect the structure.</h2></div>
+        <div class="prose overview-prose reveal">
+          <p data-i18n="overview_p1">Brain tumor segmentation requires identifying structures with overlapping intensities and irregular boundaries. StaGra explores a statistical approach that fits an individual MRI volume and uses spatial relationships to refine the resulting segmentation.</p>
+          <p data-i18n="overview_p2">The framework takes four MRI sequences—T1, contrast-enhanced T1 (T1ce), T2, and FLAIR—and operates in two stages. First, multi-planar adaptive thresholding identifies a candidate tumor region. Within this region, kernel density estimation provides starting points for a weighted Gaussian mixture model. A three-dimensional graph-cut procedure then refines voxel assignments using a spatial energy model. Intensity-based tissue mapping and post-processing produce whole-tumor, tumor-core, and enhancing-tumor masks.</p>
+          <aside class="definition-note"><span class="note-symbol" aria-hidden="true">✦</span><div><strong data-i18n="training_free_label">What “training-free” means</strong><p data-i18n="overview_note">Here, “training-free” refers to the absence of cross-subject model training. StaGra still estimates mixture parameters for each volume and uses manually specified hyperparameters and tissue-assignment rules.</p></div></aside>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- EVALUATION -->
-  <section id="evaluation" class="section has-background-light">
-    <div class="container is-max-desktop">
-      <div class="columns is-centered">
-        <div class="column is-four-fifths">
-          <h2 class="title is-3 has-text-centered" data-i18n="eval_title">Evaluation</h2>
-          <div class="content has-text-justified">
-            <p data-i18n="eval_p1">
-              The study uses multimodal MRI from <strong>BraTS 2021</strong> and examines segmentation of <strong>WT</strong>, <strong>TC</strong>, and <strong>ET</strong>. <strong>Dice similarity</strong> measures overlap with the reference segmentation, while the <strong>95th-percentile Hausdorff distance (HD95)</strong> measures boundary disagreement. Higher Dice and lower HD95 indicate better agreement under the specified evaluation protocol.
-            </p>
-            <p data-i18n="eval_p2">
-              Whole-pipeline comparisons and component ablations answer different questions. Comparisons with other segmentation pipelines assess overall behavior, while controlled ablations examine individual choices within StaGra, such as initialization or spatial inference. A difference between complete pipelines should not be attributed to a single component unless that component is isolated experimentally.
-            </p>
+    <section class="section explorer-section" id="regions" aria-labelledby="regions-title">
+      <div class="shell">
+        <div class="section-intro reveal"><div><p class="section-kicker"><span>02</span><span data-i18n="regions_kicker">Interactive anatomy</span></p><h2 id="regions-title" data-i18n="regions_title">Three regions.<br>One nested structure.</h2></div><p data-i18n="regions_intro">Explore how the three standard BraTS evaluation regions relate. The illustration is a schematic, not a diagnostic MRI image.</p></div>
+        <div class="explorer-card reveal">
+          <div class="explorer-canvas">
+            <img id="teaser-image" class="optional-figure" src="./static/images/teaser.png" alt="StaGra multimodal MRI overview" data-i18n-alt="teaser_alt" hidden>
+            <svg id="region-svg" class="region-svg" viewBox="0 0 700 520" role="img" aria-labelledby="region-svg-title region-svg-desc">
+              <title id="region-svg-title" data-i18n="region_svg_title">Schematic of nested BraTS tumor regions</title><desc id="region-svg-desc" data-i18n="region_svg_desc">Enhancing tumor is nested inside tumor core, which is nested inside whole tumor.</desc>
+              <defs><radialGradient id="sliceFill" cx="50%" cy="45%" r="55%"><stop offset="0" stop-color="#f8fafc"/><stop offset="1" stop-color="#d8e1ed"/></radialGradient><pattern id="sliceTexture" width="16" height="16" patternUnits="userSpaceOnUse"><circle cx="3" cy="3" r="1" fill="#94a3b8" opacity=".18"/><circle cx="12" cy="9" r=".8" fill="#64748b" opacity=".13"/></pattern></defs>
+              <ellipse cx="350" cy="260" rx="268" ry="207" fill="#eef2f7" stroke="#8394aa" stroke-width="2"/><ellipse cx="350" cy="260" rx="242" ry="184" fill="url(#sliceFill)" stroke="#b2c0d0"/><ellipse cx="350" cy="260" rx="242" ry="184" fill="url(#sliceTexture)"/>
+              <path d="M338 99c-61 18-94 64-88 119-47 17-66 72-42 114 24 44 83 69 130 72M362 99c61 18 94 64 88 119 47 17 66 72 42 114-24 44-83 69-130 72M350 82v356" fill="none" stroke="#a8b6c8" stroke-width="3" stroke-linecap="round"/>
+              <g class="anatomy-lines" fill="none" stroke="#c0cad7" stroke-width="2"><path d="M156 226c48-12 89 2 113 35M147 307c51-4 93 15 116 51M544 226c-48-12-89 2-113 35M553 307c-51-4-93 15-116 51"/><path d="M302 209c27-27 69-27 96 0-17 12-25 30-23 51-17-9-33-9-50 0 2-21-6-39-23-51Z"/></g>
+              <g class="region-layer region-wt" data-region-layer="wt" aria-label="WT — Whole tumor" data-i18n-aria-label="region_wt_aria"><path d="M397 169c79-24 152 25 151 100-1 81-75 143-168 121-88-21-130-101-88-167 24-37 57-48 105-54Z"/><text x="478" y="193">WT</text></g><g class="region-layer region-tc" data-region-layer="tc" aria-label="TC — Tumor core" data-i18n-aria-label="region_tc_aria"><path d="M411 203c52-14 101 20 96 71-5 55-55 91-111 71-49-17-69-66-43-104 15-22 33-31 58-38Z"/><text x="459" y="228">TC</text></g><g class="region-layer region-et" data-region-layer="et" aria-label="ET — Enhancing tumor" data-i18n-aria-label="region_et_aria"><path d="M425 239c29-6 52 16 47 44-5 30-34 47-62 34-24-11-32-40-16-61 9-11 17-15 31-17Z"/><text x="442" y="263">ET</text></g>
+              <text class="schematic-label" x="350" y="484" text-anchor="middle" data-i18n="schematic_label">SCHEMATIC — NOT A DIAGNOSTIC IMAGE</text>
+            </svg>
+          </div>
+          <div class="explorer-panel">
+            <div class="region-tabs" role="group" aria-label="Select tumor region" data-i18n-aria-label="region_controls_aria"><button class="region-tab is-active" type="button" data-region="all" aria-pressed="true" data-i18n="all_regions">All regions</button><button class="region-tab" type="button" data-region="wt" aria-pressed="false">WT</button><button class="region-tab" type="button" data-region="tc" aria-pressed="false">TC</button><button class="region-tab" type="button" data-region="et" aria-pressed="false">ET</button></div>
+            <div class="region-detail" aria-live="polite"><p class="detail-overline mono-label" id="region-overline" data-i18n="nested_hierarchy">NESTED HIERARCHY</p><h3 id="region-detail-title" data-i18n="all_title">ET is contained in TC, and TC in WT</h3><p id="region-detail-copy" data-i18n="all_copy">Together, the three regions describe progressively more focused tumor structures used in BraTS evaluation.</p><div class="nesting-equation" aria-label="Enhancing tumor is a subset of tumor core, which is a subset of whole tumor">ET <span>⊂</span> TC <span>⊂</span> WT</div></div>
+            <div class="region-legend"><span><i class="legend-wt"></i><b>WT</b><small data-i18n="wt_short">Whole tumor</small></span><span><i class="legend-tc"></i><b>TC</b><small data-i18n="tc_short">Tumor core</small></span><span><i class="legend-et"></i><b>ET</b><small data-i18n="et_short">Enhancing</small></span></div>
           </div>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- SCOPE AND LIMITATIONS -->
-  <section id="limitations" class="section">
-    <div class="container is-max-desktop">
-      <div class="columns is-centered">
-        <div class="column is-four-fifths">
-          <h2 class="title is-3 has-text-centered" data-i18n="limit_title">Scope and Limitations</h2>
-          <div class="content has-text-justified">
-            <p data-i18n="limit_p1">
-              StaGra investigates an interpretable, per-volume approach to brain tumor segmentation. Its output depends on candidate-region coverage, intensity normalization, tissue-assignment rules, and post-processing. Overlapping tissue intensities and small or disconnected tumor components can make segmentation difficult.
-            </p>
-            <p data-i18n="limit_p2">
-              Evaluation on preprocessed BraTS data does not establish performance on arbitrary clinical acquisitions, missing MRI sequences, or unseen acquisition protocols. Potential uses in coarse localization or pseudo-label generation require further task-specific validation.
-            </p>
-          </div>
+    <section class="section ideas-section" id="ideas" aria-labelledby="ideas-title">
+      <div class="shell">
+        <div class="section-intro reveal"><div><p class="section-kicker"><span>03</span><span data-i18n="ideas_kicker">Design principles</span></p><h2 id="ideas-title" data-i18n="ideas_title">Three ideas drive<br>the framework.</h2></div><p data-i18n="ideas_intro">StaGra narrows the search, learns intensity structure from the current volume, then restores spatial coherence.</p></div>
+        <div class="ideas-grid">
+          <article class="idea-card idea-one reveal"><div class="idea-number">01</div><div class="idea-symbol" aria-hidden="true"><span></span></div><h3 data-i18n="idea1_title">Localize before modeling</h3><p data-i18n="idea1_copy">A candidate region focuses the statistical analysis on potentially abnormal tissue. Adaptive thresholding across three orthogonal views combines complementary spatial information before volumetric filtering.</p></article>
+          <article class="idea-card idea-two reveal"><div class="idea-number">02</div><svg class="density-mark" viewBox="0 0 240 90" aria-hidden="true"><path d="M2 82C28 80 34 52 52 50s23 29 39 26 18-65 42-66 28 54 47 54 23-30 58-31" fill="none" stroke="currentColor" stroke-width="3"/><path d="M2 82h236" stroke="currentColor" opacity=".2"/></svg><h3 data-i18n="idea2_title">Initialize from image density</h3><p data-i18n="idea2_copy">Kernel density estimation identifies high-density locations in the multimodal feature space. These locations initialize the Gaussian mixture model, which estimates tissue-related intensity distributions within the candidate region.</p></article>
+          <article class="idea-card idea-three reveal"><div class="idea-number">03</div><div class="graph-mark" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><span></span></div><h3 data-i18n="idea3_title">Refine with 3D spatial structure</h3><p data-i18n="idea3_copy">Voxelwise statistical assignments can be spatially fragmented. StaGra combines their data costs with contrast-sensitive neighborhood penalties and applies graph-cut moves to seek a lower-energy volumetric labeling.</p></article>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- RESOURCES & CONTACT -->
-  <section id="resources" class="section has-background-light">
-    <div class="container is-max-desktop">
-      <div class="columns is-centered">
-        <div class="column is-four-fifths">
-          <h2 class="title is-3 has-text-centered" data-i18n="res_title">Resources &amp; Contact</h2>
-
-          <div class="columns mt-4">
-            <div class="column is-four-desktop">
-              <div class="box resource-box">
-                <div>
-                  <h3 class="title is-5"><i class="fas fa-file-alt mr-2"></i><span data-i18n="res_paper_title">Paper</span></h3>
-                  <p class="is-size-6" data-i18n="res_paper_desc">Describes the method and experimental protocol.</p>
-                </div>
-                <a href="./static/files/StaGra_Paper.pdf" class="button is-small is-link is-outlined mt-3">
-                  <span data-i18n="res_paper_btn">View Paper PDF</span>
-                </a>
-              </div>
-            </div>
-
-            <div class="column is-four-desktop">
-              <div class="box resource-box">
-                <div>
-                  <h3 class="title is-5"><i class="fab fa-github mr-2"></i><span data-i18n="res_code_title">Code Release</span></h3>
-                  <p class="is-size-6" data-i18n="res_code_desc">Identifies the implementation and configuration associated with the reported results.</p>
-                </div>
-                <a href="https://github.com/" target="_blank" rel="noopener" class="button is-small is-link is-outlined mt-3">
-                  <span data-i18n="res_code_btn">GitHub Repository</span>
-                </a>
-              </div>
-            </div>
-
-            <div class="column is-four-desktop">
-              <div class="box resource-box">
-                <div>
-                  <h3 class="title is-5"><i class="fas fa-image mr-2"></i><span data-i18n="res_poster_title">Poster</span></h3>
-                  <p class="is-size-6" data-i18n="res_poster_desc">Provides a concise summary of the study.</p>
-                </div>
-                <a href="./static/files/StaGra_Poster.pdf" class="button is-small is-link is-outlined mt-3">
-                  <span data-i18n="res_poster_btn">View Poster PDF</span>
-                </a>
-              </div>
-            </div>
-          </div>
-
-          <div class="box mt-4">
-            <h3 class="title is-5" data-i18n="contact_title">Contact</h3>
-            <p data-i18n="contact_desc">
-              For questions about the project, please contact <strong>Van-Duc Tran</strong> at
-              <a href="mailto:duc.tranduc2006@hcmut.edu.vn">duc.tranduc2006@hcmut.edu.vn</a>.
-            </p>
+    <section class="section method-section" id="method" aria-labelledby="method-title">
+      <div class="shell">
+        <div class="section-intro reveal"><div><p class="section-kicker"><span>04</span><span data-i18n="method_kicker">Interactive blueprint</span></p><h2 id="method-title" data-i18n="method_title">From candidate region<br>to coherent masks.</h2></div><p data-i18n="method_intro">Select a node to inspect its role. The blueprint summarizes the supplied project description without adding unpublished mathematical detail.</p></div>
+        <img id="pipeline-image" class="optional-pipeline" src="./static/images/pipeline.png" alt="StaGra two-stage method pipeline" data-i18n-alt="pipeline_alt" hidden>
+        <div class="pipeline reveal">
+          <div class="pipeline-rail"><button class="stage-jump is-active" type="button" data-stage-jump="stage1" aria-pressed="true"><span>01</span><b data-i18n="stage1_short">Candidate localization</b></button><button class="stage-jump" type="button" data-stage-jump="stage2" aria-pressed="false"><span>02</span><b data-i18n="stage2_short">Statistical + spatial</b></button></div>
+          <div class="pipeline-workspace">
+            <section class="pipeline-stage is-active" data-stage="stage1"><div class="stage-header"><div><span class="stage-index">STAGE 01</span><h3 data-i18n="stage1_title">Candidate localization</h3></div><p data-i18n="stage1_blurb">Use multi-planar FLAIR evidence to define where later modeling is allowed to operate.</p></div><div class="node-flow"><button type="button" class="pipeline-node is-selected" data-node="flair_views"><span class="node-kind" data-i18n="input">INPUT</span><b>FLAIR</b><small data-i18n="flair_views_short">Axial · Coronal · Sagittal</small></button><i>→</i><button type="button" class="pipeline-node" data-node="threshold"><span class="node-kind" data-i18n="operation">OPERATION</span><b data-i18n="threshold_short">Adaptive thresholding</b><small data-i18n="intensity_rules">+ intensity rules</small></button><i>→</i><button type="button" class="pipeline-node" data-node="voting"><span class="node-kind" data-i18n="fusion">FUSION</span><b data-i18n="voting_short">Weighted voting</b><small data-i18n="three_views">three views</small></button><i>→</i><button type="button" class="pipeline-node" data-node="morphology"><span class="node-kind" data-i18n="filter">FILTER</span><b data-i18n="morph_short">Volumetric filtering</b><small data-i18n="morph_ops">+ morphology</small></button><i>→</i><button type="button" class="pipeline-node node-output" data-node="roi"><span class="node-kind" data-i18n="output">OUTPUT</span><b data-i18n="roi_short">Candidate ROI</b><small data-i18n="active_domain">active domain</small></button></div></section>
+            <section class="pipeline-stage" data-stage="stage2" hidden><div class="stage-header"><div><span class="stage-index">STAGE 02</span><h3 data-i18n="stage2_title">Statistical modeling & spatial refinement</h3></div><p data-i18n="stage2_blurb">Estimate per-volume intensity structure, then seek a lower-energy 3D labeling.</p></div><div class="stage2-inputs"><span>T1</span><span>T1ce</span><span>T2</span><span>FLAIR</span></div><div class="node-flow stage2-flow"><button type="button" class="pipeline-node" data-node="standardize"><span class="node-kind" data-i18n="prepare">PREPARE</span><b data-i18n="standardize_short">Standardize + weight</b></button><i>→</i><button type="button" class="pipeline-node" data-node="kde"><span class="node-kind">KDE</span><b data-i18n="kde_short">Density peaks</b></button><i>→</i><button type="button" class="pipeline-node" data-node="gmm"><span class="node-kind">GMM · EM</span><b data-i18n="gmm_short">Five components</b></button><i>→</i><button type="button" class="pipeline-node" data-node="mapping"><span class="node-kind" data-i18n="map">MAP</span><b data-i18n="mapping_short">Tissue preferences</b></button><i>→</i><button type="button" class="pipeline-node" data-node="potts"><span class="node-kind">3D</span><b data-i18n="potts_short">Potts energy</b></button><i>→</i><button type="button" class="pipeline-node" data-node="graphcut"><span class="node-kind" data-i18n="refine">REFINE</span><b>α-expansion</b></button><i>→</i><button type="button" class="pipeline-node node-output" data-node="masks"><span class="node-kind" data-i18n="output">OUTPUT</span><b>WT · TC · ET</b></button></div></section>
+            <aside class="node-detail" aria-live="polite" aria-atomic="true"><div class="detail-number" id="node-detail-number">01</div><div><p class="mono-label" id="node-detail-stage">STAGE 01 · INPUT</p><h4 id="node-detail-title" data-i18n="node_flair_title">Multi-planar FLAIR</h4><p id="node-detail-copy" data-i18n="node_flair_copy">FLAIR images are processed across axial, coronal, and sagittal orientations to gather complementary spatial evidence for candidate localization.</p></div></aside>
           </div>
         </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- BIBTEX -->
-  <section id="bibtex" class="section">
-    <div class="container is-max-desktop content">
-      <div class="columns is-centered">
-        <div class="column is-four-fifths">
-          <div class="is-flex is-justify-content-space-between is-align-items-center mb-2">
-            <h2 class="title is-3 mb-0">BibTeX</h2>
-            <button id="copyBibtexBtn" class="button is-small is-dark is-rounded" onclick="copyBibtex()">
-              <span class="icon"><i class="fas fa-copy"></i></span>
-              <span id="copyBtnText">Copy BibTeX</span>
-            </button>
-          </div>
-          <pre id="bibtexCode"><code>@inproceedings{bui2026stagra,
-  title     = {MRI Segmentation via Training-Free Statistical-Graph Framework},
-  author    = {Bui, Thanh-Tin and Mai, Hoang-Hiep and Tran, Van-Duc and Nguyen-Van, Anh-Khoa and Nguyen, Duy-Tan and Khanh, Loi Nguyen},
-  booktitle = {Proceedings of the International Symposium on Information and Communication Technology (SoICT)},
-  year      = {2026}
-}</code></pre>
+        <div class="method-copy-grid reveal">
+          <article><span class="method-number">01</span><h3 data-i18n="stage1_title">Candidate localization</h3><p data-i18n="stage1_p1">FLAIR images are processed across three orthogonal orientations. Adaptive thresholding and intensity rules produce candidate masks, which are combined by weighted voting. Volumetric filtering and morphological operations consolidate the candidate region of interest.</p><p class="caution"><strong data-i18n="why_it_matters">Why it matters:</strong> <span data-i18n="stage1_p2">This region defines the spatial domain for the next stage. Candidate coverage therefore matters: tumor tissue excluded at this stage cannot be recovered by subsequent modeling restricted to that region.</span></p></article>
+          <article><span class="method-number">02</span><h3 data-i18n="stage2_title">Statistical modeling & spatial refinement</h3><p data-i18n="stage2_p1">Each active voxel is represented by its normalized T1, T1ce, T2, and FLAIR intensities. Importance weighting and feature standardization prepare the multimodal features for density estimation and mixture fitting.</p><p data-i18n="stage2_p2">Kernel density peaks initialize a five-component Gaussian mixture model. Weighted expectation–maximization estimates the mixture parameters for the current volume. Fixed intensity rules associate the resulting components with tissue categories and provide additional preferences for voxel labeling.</p><p data-i18n="stage2_p3">Spatial refinement uses a contrast-sensitive Potts model over neighboring voxels in three dimensions. Unary costs encode statistical evidence, while pairwise costs penalize label differences according to local feature contrast. Alpha-expansion graph-cut moves approximately minimize this multi-label energy; they do not guarantee an exact global optimum.</p></article>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- FOOTER & ATTRIBUTION -->
-  <footer class="footer">
-    <div class="container is-max-desktop">
-      <div class="content has-text-centered is-size-6">
-        <p data-i18n="attribution">
-          Website template adapted from the
-          <a href="https://nerfies.github.io/" target="_blank" rel="noopener">Nerfies project page</a>
-          by Keunhong Park and collaborators, licensed under
-          <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC BY-SA 4.0</a>.
-        </p>
+    <section class="section outputs-section" id="outputs" aria-labelledby="outputs-title"><div class="shell section-grid"><div class="section-heading reveal"><p class="section-kicker"><span>05</span><span data-i18n="outputs_kicker">Output regions</span></p><h2 id="outputs-title" data-i18n="outputs_title">A standard BraTS<br>view of the result.</h2><p data-i18n="outputs_intro">The final output is expressed using three standard BraTS evaluation regions.</p></div><div class="output-list reveal"><article class="output-row output-wt"><span class="output-code">WT</span><div><h3 data-i18n="wt_title">Whole tumor</h3><p data-i18n="wt_copy">Edema, necrotic or non-enhancing core, and enhancing tumor</p></div><span class="output-swatch"></span></article><article class="output-row output-tc"><span class="output-code">TC</span><div><h3 data-i18n="tc_title">Tumor core</h3><p data-i18n="tc_copy">Necrotic or non-enhancing core and enhancing tumor</p></div><span class="output-swatch"></span></article><article class="output-row output-et"><span class="output-code">ET</span><div><h3 data-i18n="et_title">Enhancing tumor</h3><p data-i18n="et_copy">Enhancing tumor component</p></div><span class="output-swatch"></span></article></div></div></section>
+
+    <section class="section evaluation-section" id="evaluation" aria-labelledby="evaluation-title">
+      <div class="shell"><div class="section-intro reveal"><div><p class="section-kicker"><span>06</span><span data-i18n="evaluation_kicker">Evaluation & boundaries</span></p><h2 id="evaluation-title" data-i18n="evaluation_title">Measure carefully.<br>Interpret cautiously.</h2></div><p data-i18n="evaluation_intro">The public project description explains the protocol without publishing unconfirmed scores or runtime claims.</p></div>
+        <div class="evaluation-grid"><article class="metric-card reveal"><div class="metric-glyph dice-glyph" aria-hidden="true"><i></i><i></i></div><span class="mono-label" data-i18n="overlap_metric">OVERLAP METRIC</span><h3>Dice ↑</h3><p data-i18n="dice_copy">Dice similarity measures overlap with the reference segmentation. Higher values indicate better agreement under the specified evaluation protocol.</p></article><article class="metric-card reveal"><div class="metric-glyph hd-glyph" aria-hidden="true"><i></i><i></i><span>↔</span></div><span class="mono-label" data-i18n="boundary_metric">BOUNDARY METRIC</span><h3>HD95 ↓</h3><p data-i18n="hd_copy">The 95th-percentile Hausdorff distance measures boundary disagreement. Lower values indicate better agreement under the specified protocol.</p></article><article class="evaluation-copy reveal"><h3 data-i18n="protocol_title">Protocol context</h3><p data-i18n="evaluation_p1">The study uses multimodal MRI from BraTS 2021 and examines segmentation of WT, TC, and ET.</p><p data-i18n="evaluation_p2">Whole-pipeline comparisons and component ablations answer different questions. Comparisons with other segmentation pipelines assess overall behavior, while controlled ablations examine individual choices within StaGra, such as initialization or spatial inference. A difference between complete pipelines should not be attributed to a single component unless that component is isolated experimentally.</p></article></div>
+        <aside class="limitations reveal" id="limitations"><div class="limitations-title"><span class="limitation-mark" aria-hidden="true">!</span><div><p class="mono-label" data-i18n="scope_label">SCOPE & LIMITATIONS</p><h3 data-i18n="scope_title">An interpretable study—not a clinical claim.</h3></div></div><div class="limitations-copy"><p data-i18n="scope_p1">StaGra investigates an interpretable, per-volume approach to brain tumor segmentation. Its output depends on candidate-region coverage, intensity normalization, tissue-assignment rules, and post-processing. Overlapping tissue intensities and small or disconnected tumor components can make segmentation difficult.</p><p data-i18n="scope_p2">Evaluation on preprocessed BraTS data does not establish performance on arbitrary clinical acquisitions, missing MRI sequences, or unseen acquisition protocols. Potential uses in coarse localization or pseudo-label generation require further task-specific validation.</p></div></aside>
       </div>
-    </div>
-  </footer>
+    </section>
 
-  <script>
-    // Từ điển nội dung song ngữ EN / VI
-    const translations = {
-      en: {
-        nav_overview: "Overview",
-        nav_ideas: "Key Ideas",
-        nav_method: "Method",
-        nav_eval: "Evaluation",
-        nav_limit: "Limitations",
-        venue_line: "Accepted at SoICT 2026",
-        equal_contrib: "<sup>*</sup>Equal contribution as first authors.",
-        btn_paper: "Paper",
-        btn_code: "Code",
-        btn_poster: "Poster",
-        one_sentence_summary: "StaGra combines statistical intensity modeling and 3D graph-cut refinement to segment brain tumor subregions from multimodal MRI without training a shared segmentation model across subjects.",
-        teaser_caption: "<strong>StaGra Overview:</strong> Per-volume statistical intensity modeling and 3D graph-cut spatial refinement applied to multimodal MRI (T1, T1ce, T2, FLAIR) to delineate whole-tumor (WT), tumor-core (TC), and enhancing-tumor (ET) regions without cross-subject training.",
-        overview_title: "Overview",
-        overview_p1: "Brain tumor segmentation requires identifying structures with overlapping intensities and irregular boundaries. StaGra explores a statistical approach that fits an individual MRI volume and uses spatial relationships to refine the resulting segmentation.",
-        overview_p2: "The framework takes four MRI sequences—<strong>T1</strong>, <strong>contrast-enhanced T1 (T1ce)</strong>, <strong>T2</strong>, and <strong>FLAIR</strong>—and operates in two stages. First, multi-planar adaptive thresholding identifies a candidate tumor region. Within this region, kernel density estimation provides starting points for a weighted Gaussian mixture model. A three-dimensional graph-cut procedure then refines voxel assignments using a spatial energy model. Intensity-based tissue mapping and post-processing produce whole-tumor, tumor-core, and enhancing-tumor masks.",
-        overview_p3: "Here, <strong>“training-free”</strong> refers to the absence of cross-subject model training. StaGra still estimates mixture parameters for each volume and uses manually specified hyperparameters and tissue-assignment rules.",
-        ideas_title: "Key Ideas",
-        idea1_title: "1. Localize before modeling",
-        idea1_body: "A candidate region focuses the statistical analysis on potentially abnormal tissue. Adaptive thresholding across three orthogonal views combines complementary spatial information before volumetric filtering.",
-        idea2_title: "2. Initialize from image density",
-        idea2_body: "Kernel density estimation identifies high-density locations in the multimodal feature space. These locations initialize the Gaussian mixture model, which estimates tissue-related intensity distributions within the candidate region.",
-        idea3_title: "3. Refine with 3D spatial structure",
-        idea3_body: "Voxelwise statistical assignments can be spatially fragmented. StaGra combines their data costs with contrast-sensitive neighborhood penalties and applies graph-cut moves to seek a lower-energy volumetric labeling.",
-        method_title: "Method",
-        stage1_title: "Stage 1 — Candidate localization",
-        stage1_p1: "FLAIR images are processed across three orthogonal orientations. Adaptive thresholding and intensity rules produce candidate masks, which are combined by weighted voting. Volumetric filtering and morphological operations consolidate the candidate region of interest.",
-        stage1_p2: "This region defines the spatial domain for the next stage. Candidate coverage therefore matters: tumor tissue excluded at this stage cannot be recovered by subsequent modeling restricted to that region.",
-        stage2_title: "Stage 2 — Statistical modeling and spatial refinement",
-        stage2_p1: "Each active voxel is represented by its normalized T1, T1ce, T2, and FLAIR intensities. Importance weighting and feature standardization prepare the multimodal features for density estimation and mixture fitting.",
-        stage2_p2: "Kernel density peaks initialize a five-component Gaussian mixture model. Weighted expectation–maximization estimates the mixture parameters for the current volume. Fixed intensity rules associate the resulting components with tissue categories and provide additional preferences for voxel labeling.",
-        stage2_p3: "Spatial refinement uses a contrast-sensitive Potts model over neighboring voxels in three dimensions. Unary costs encode statistical evidence, while pairwise costs penalize label differences according to local feature contrast. Alpha-expansion graph-cut moves approximately minimize this multi-label energy; they do not guarantee an exact global optimum.",
-        output_title: "Output regions",
-        output_intro: "The final output is expressed using three standard BraTS evaluation regions:",
-        tbl_col_region: "Region",
-        tbl_col_abbr: "Abbreviation",
-        tbl_col_def: "Definition",
-        tbl_wt_name: "Whole tumor",
-        tbl_wt_def: "Edema, necrotic or non-enhancing core, and enhancing tumor",
-        tbl_tc_name: "Tumor core",
-        tbl_tc_def: "Necrotic or non-enhancing core and enhancing tumor",
-        tbl_et_name: "Enhancing tumor",
-        tbl_et_def: "Enhancing tumor component",
-        eval_title: "Evaluation",
-        eval_p1: "The study uses multimodal MRI from <strong>BraTS 2021</strong> and examines segmentation of <strong>WT</strong>, <strong>TC</strong>, and <strong>ET</strong>. <strong>Dice similarity</strong> measures overlap with the reference segmentation, while the <strong>95th-percentile Hausdorff distance (HD95)</strong> measures boundary disagreement. Higher Dice and lower HD95 indicate better agreement under the specified evaluation protocol.",
-        eval_p2: "Whole-pipeline comparisons and component ablations answer different questions. Comparisons with other segmentation pipelines assess overall behavior, while controlled ablations examine individual choices within StaGra, such as initialization or spatial inference. A difference between complete pipelines should not be attributed to a single component unless that component is isolated experimentally.",
-        limit_title: "Scope and Limitations",
-        limit_p1: "StaGra investigates an interpretable, per-volume approach to brain tumor segmentation. Its output depends on candidate-region coverage, intensity normalization, tissue-assignment rules, and post-processing. Overlapping tissue intensities and small or disconnected tumor components can make segmentation difficult.",
-        limit_p2: "Evaluation on preprocessed BraTS data does not establish performance on arbitrary clinical acquisitions, missing MRI sequences, or unseen acquisition protocols. Potential uses in coarse localization or pseudo-label generation require further task-specific validation.",
-        res_title: "Resources & Contact",
-        res_paper_title: "Paper",
-        res_paper_desc: "Describes the method and experimental protocol.",
-        res_paper_btn: "View Paper PDF",
-        res_code_title: "Code Release",
-        res_code_desc: "Identifies the implementation and configuration associated with the reported results.",
-        res_code_btn: "GitHub Repository",
-        res_poster_title: "Poster",
-        res_poster_desc: "Provides a concise summary of the study.",
-        res_poster_btn: "View Poster PDF",
-        contact_title: "Contact",
-        contact_desc: 'For questions about the project, please contact <strong>Van-Duc Tran</strong> at <a href="mailto:duc.tranduc2006@hcmut.edu.vn">duc.tranduc2006@hcmut.edu.vn</a>.',
-        attribution: 'Website template adapted from the <a href="https://nerfies.github.io/" target="_blank" rel="noopener">Nerfies project page</a> by Keunhong Park and collaborators, licensed under <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC BY-SA 4.0</a>.'
-      },
-      vi: {
-        nav_overview: "Tổng quan",
-        nav_ideas: "Ý tưởng chính",
-        nav_method: "Phương pháp",
-        nav_eval: "Đánh giá",
-        nav_limit: "Giới hạn",
-        venue_line: "Chấp nhận đăng tại SoICT 2026",
-        equal_contrib: "<sup>*</sup>Đồng tác giả chính (đóng góp ngang nhau).",
-        btn_paper: "Bài báo",
-        btn_code: "Mã nguồn",
-        btn_poster: "Poster",
-        one_sentence_summary: "StaGra kết hợp mô hình hóa phân bố cường độ thống kê và tinh chỉnh cắt đồ thị 3D để phân vùng các tiểu vùng khối u não từ ảnh MRI đa chuỗi xung mà không cần huấn luyện mô hình phân vùng chung xuyên suốt nhiều bệnh nhân.",
-        teaser_caption: "<strong>Tổng quan StaGra:</strong> Mô hình hóa cường độ thống kê trên từng khối ảnh và tinh chỉnh không gian bằng cắt đồ thị 3D trên dữ liệu MRI đa chuỗi xung (T1, T1ce, T2, FLAIR) để tách các vùng toàn bộ khối u (WT), lõi khối u (TC) và khối u tăng quang (ET) mà không cần huấn luyện xuyên đối tượng.",
-        overview_title: "Tổng quan",
-        overview_p1: "Bài toán phân vùng khối u não đòi hỏi nhận diện các cấu trúc có mức cường độ tín hiệu chồng lấn và đường biên bất quy tắc. StaGra khai thác hướng tiếp cận thống kê khớp trực tiếp trên từng khối ảnh MRI riêng lẻ và sử dụng mối quan hệ không gian để tinh chỉnh kết quả phân vùng.",
-        overview_p2: "Khung phương pháp nhận đầu vào gồm bốn chuỗi xung MRI—<strong>T1</strong>, <strong>T1 tăng quang (T1ce)</strong>, <strong>T2</strong> và <strong>FLAIR</strong>—và vận hành theo hai giai đoạn. Trước tiên, phân ngưỡng thích nghi đa mặt phẳng xác định vùng ứng viên chứa khối u. Bên trong vùng này, ước lượng mật độ hạt nhân (KDE) cung cấp các điểm khởi tạo cho mô hình hỗn hợp Gaussian có trọng số (weighted GMM). Tiếp theo, thủ tục cắt đồ thị ba chiều (3D graph-cut) tinh chỉnh việc gán nhãn voxel thông qua mô hình năng lượng không gian. Cuối cùng, ánh xạ mô dựa trên cường độ và hậu xử lý tạo ra các mặt nạ toàn bộ khối u, lõi khối u và khối u tăng quang.",
-        overview_p3: "Ở đây, thuật ngữ <strong>“không cần huấn luyện” (training-free)</strong> đề cập đến việc không huấn luyện mô hình học máy xuyên suốt nhiều bệnh nhân. StaGra vẫn ước lượng các tham số mô hình hỗn hợp cho từng khối ảnh riêng lẻ, đồng thời sử dụng các siêu tham số và quy tắc gán nhãn mô được thiết lập tường minh.",
-        ideas_title: "Ý tưởng chính",
-        idea1_title: "1. Khoanh vùng trước khi mô hình hóa",
-        idea1_body: "Vùng ứng viên giúp tập trung phân tích thống kê vào khu vực mô có khả năng bất thường. Phân ngưỡng thích nghi trên ba mặt phẳng trực giao kết hợp thông tin không gian bổ trợ trước khi thực hiện lọc theo thể tích.",
-        idea2_title: "2. Khởi tạo từ mật độ phân bố ảnh",
-        idea2_body: "Ước lượng mật độ hạt nhân xác định các đỉnh mật độ cao trong không gian đặc trưng đa chuỗi xung. Các vị trí này được dùng để khởi tạo mô hình hỗn hợp Gaussian nhằm ước lượng phân bố cường độ của từng loại mô bên trong vùng ứng viên.",
-        idea3_title: "3. Tinh chỉnh theo cấu trúc không gian 3D",
-        idea3_body: "Việc gán nhãn thống kê độc lập từng voxel dễ gây rời rạc về mặt không gian. StaGra kết hợp chi phí dữ liệu với hình phạt lân cận nhạy tương phản và áp dụng các bước dịch chuyển cắt đồ thị (graph-cut) để tìm cấu hình gán nhãn thể tích có năng lượng thấp hơn.",
-        method_title: "Phương pháp",
-        stage1_title: "Giai đoạn 1 — Khoanh vùng ứng viên",
-        stage1_p1: "Ảnh FLAIR được xử lý đồng thời trên ba hướng trực giao. Phân ngưỡng thích nghi cùng các quy tắc cường độ tạo ra các mặt nạ ứng viên, sau đó được tổng hợp bằng biểu quyết có trọng số. Lọc theo thể tích và các phép toán hình thái học giúp hợp nhất vùng quan tâm (ROI) ứng viên.",
-        stage1_p2: "Vùng này xác định miền không gian cho giai đoạn kế tiếp. Do đó, độ bao phủ của vùng ứng viên đóng vai trò then chốt: phần mô khối u bị bỏ sót ở giai đoạn này sẽ không thể phục hồi ở bước mô hình hóa phía sau vốn chỉ giới hạn trong vùng đã chọn.",
-        stage2_title: "Giai đoạn 2 — Mô hình hóa thống kê và tinh chỉnh không gian",
-        stage2_p1: "Mỗi voxel hoạt động được biểu diễn bằng các giá trị cường độ T1, T1ce, T2 và FLAIR đã chuẩn hóa. Đánh trọng số tầm quan trọng và chuẩn hóa đặc trưng giúp chuẩn bị dữ liệu đa chuỗi xung cho bước ước lượng mật độ và khớp mô hình hỗn hợp.",
-        stage2_p2: "Các đỉnh mật độ hạt nhân khởi tạo mô hình hỗn hợp Gaussian gồm năm thành phần. Thuật toán cực đại hóa kỳ vọng có trọng số (weighted EM) ước lượng tham số hỗn hợp cho khối ảnh hiện tại. Các quy tắc cường độ cố định liên kết từng thành phần với nhóm mô tương ứng và bổ sung độ ưu tiên cho việc gán nhãn voxel.",
-        stage2_p3: "Bước tinh chỉnh không gian sử dụng mô hình Potts nhạy tương phản trên các voxel lân cận trong không gian ba chiều. Chi phí đơn (unary costs) mã hóa bằng chứng thống kê, trong khi chi phí cặp (pairwise costs) phạt sự khác biệt nhãn dựa theo độ tương phản đặc trưng cục bộ. Các bước dịch chuyển cắt đồ thị mở rộng alpha (alpha-expansion) tối thiểu hóa xấp xỉ hàm năng lượng đa nhãn này và không đảm bảo đạt cực tiểu toàn cục chính xác.",
-        output_title: "Các vùng đầu ra",
-        output_intro: "Kết quả đầu ra cuối cùng được biểu diễn theo ba vùng đánh giá tiêu chuẩn của BraTS:",
-        tbl_col_region: "Vùng phân vùng",
-        tbl_col_abbr: "Ký hiệu",
-        tbl_col_def: "Định nghĩa",
-        tbl_wt_name: "Toàn bộ khối u",
-        tbl_wt_def: "Vùng phù nề, lõi hoại tử hoặc không tăng quang và khối u tăng quang",
-        tbl_tc_name: "Lõi khối u",
-        tbl_tc_def: "Lõi hoại tử hoặc không tăng quang và khối u tăng quang",
-        tbl_et_name: "Khối u tăng quang",
-        tbl_et_def: "Thành phần khối u tăng quang",
-        eval_title: "Đánh giá thực nghiệm",
-        eval_p1: "Nghiên cứu sử dụng dữ liệu MRI đa chuỗi xung từ bộ <strong>BraTS 2021</strong> và khảo sát khả năng phân vùng đối với <strong>WT</strong>, <strong>TC</strong> và <strong>ET</strong>. <strong>Độ tương đồng Dice</strong> đo mức độ chồng khớp với nhãn tham chiếu, trong khi <strong>khoảng cách Hausdorff phân vị thứ 95 (HD95)</strong> đo sai lệch đường biên. Chỉ số Dice cao hơn và HD95 thấp hơn thể hiện mức độ tương đồng tốt hơn theo quy trình đánh giá đã thiết lập.",
-        eval_p2: "So sánh toàn bộ quy trình và thử nghiệm loại bỏ từng thành phần (ablation) trả lời những câu hỏi khác nhau. Việc đối chiếu với các quy trình phân vùng khác đánh giá hành vi tổng thể, trong khi các thử nghiệm loại bỏ có kiểm soát khảo sát từng lựa chọn thiết kế bên trong StaGra, chẳng hạn như bước khởi tạo hay suy luận không gian. Sự khác biệt giữa hai quy trình hoàn chỉnh không nên quy kết cho một thành phần đơn lẻ trừ khi thành phần đó được cô lập trong thực nghiệm.",
-        limit_title: "Phạm vi và Hạn chế",
-        limit_p1: "StaGra khảo sát hướng tiếp cận có tính diễn giải cao, xử lý trên từng khối ảnh cho bài toán phân vùng khối u não. Kết quả đầu ra phụ thuộc vào độ bao phủ của vùng ứng viên, chuẩn hóa cường độ, quy tắc gán nhãn mô và hậu xử lý. Sự chồng lấn cường độ giữa các loại mô cùng các thành phần khối u kích thước nhỏ hoặc tách rời có thể gây khó khăn cho việc phân vùng.",
-        limit_p2: "Việc đánh giá trên dữ liệu BraTS đã tiền xử lý chưa khẳng định hiệu năng trên các ca chụp lâm sàng tùy ý, trường hợp thiếu chuỗi xung MRI hoặc các giao thức thu nhận ảnh chưa từng gặp. Các ứng dụng tiềm năng như định vị thô hoặc tạo nhãn giả (pseudo-label) cần được kiểm chứng bổ sung theo từng bài toán cụ thể.",
-        res_title: "Tài nguyên & Liên hệ",
-        res_paper_title: "Bài báo (Paper)",
-        res_paper_desc: "Trình bày chi tiết phương pháp và quy trình thực nghiệm.",
-        res_paper_btn: "Xem PDF Bài báo",
-        res_code_title: "Mã nguồn (Code)",
-        res_code_desc: "Cung cấp mã nguồn cài đặt và cấu hình gắn với các kết quả được báo cáo.",
-        res_code_btn: "Mở GitHub Repository",
-        res_poster_title: "Poster Hội nghị",
-        res_poster_desc: "Cung cấp bản tóm tắt trực quan ngắn gọn của nghiên cứu.",
-        res_poster_btn: "Xem PDF Poster",
-        contact_title: "Liên hệ",
-        contact_desc: 'Mọi thắc mắc về dự án, vui lòng liên hệ <strong>Van-Duc Tran</strong> qua email <a href="mailto:duc.tranduc2006@hcmut.edu.vn">duc.tranduc2006@hcmut.edu.vn</a>.',
-        attribution: 'Giao diện trang web được tùy biến từ mẫu <a href="https://nerfies.github.io/" target="_blank" rel="noopener">Nerfies project page</a> của Keunhong Park và cộng sự, cấp phép theo <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC BY-SA 4.0</a>.'
-      }
-    };
+    <section class="section resources-section" id="resources" aria-labelledby="resources-title">
+      <div class="shell"><div class="section-intro reveal"><div><p class="section-kicker"><span>07</span><span data-i18n="resources_kicker">Resources & contact</span></p><h2 id="resources-title" data-i18n="resources_title">Continue exploring<br>the project.</h2></div><p data-i18n="resources_intro">The paper describes the method and experimental protocol. The code release should identify the implementation and configuration associated with the reported results. The poster provides a concise summary of the study.</p></div>
+        <div class="resource-grid reveal"><div class="resource-card is-unavailable" data-resource-card="paper"><span class="resource-number">01</span><div><h3 data-i18n="paper">Paper</h3><p data-i18n="paper_desc">Method and experimental protocol</p></div><span class="status-chip" data-i18n="coming_soon">Coming soon</span></div><div class="resource-card is-unavailable" data-resource-card="code"><span class="resource-number">02</span><div><h3 data-i18n="code">Code</h3><p data-i18n="code_desc">Implementation and configuration</p></div><span class="status-chip" data-i18n="coming_soon">Coming soon</span></div><div class="resource-card is-unavailable" data-resource-card="poster"><span class="resource-number">03</span><div><h3 data-i18n="poster">Poster</h3><p data-i18n="poster_desc">Concise conference summary</p></div><span class="status-chip" data-i18n="coming_soon">Coming soon</span></div></div>
+        <div class="contact-panel reveal"><div><span class="mono-label" data-i18n="contact_label">PROJECT CONTACT</span><h3>Van-Duc Tran</h3><p data-i18n="contact_copy">For questions about the project, please get in touch.</p></div><a class="email-link" href="mailto:duc.tranduc2006@hcmut.edu.vn"><span>duc.tranduc2006@hcmut.edu.vn</span><b aria-hidden="true">↗</b></a></div>
+        <section class="citation-panel reveal" id="citation" aria-labelledby="citation-title"><div class="citation-head"><div><span class="mono-label">BIBTEX</span><h3 id="citation-title" data-i18n="citation_title">Cite StaGra</h3></div><button type="button" id="copy-bibtex"><span class="copy-icon" aria-hidden="true">▣</span><span data-i18n="copy_bibtex">Copy BibTeX</span></button></div><pre><code id="bibtex-code">@misc{stagra2026,
+  title  = {MRI Segmentation via Training-Free Statistical-Graph Framework},
+  author = {Bui, Thanh-Tin and Mai, Hoang-Hiep and Tran, Van-Duc and Nguyen-Van, Anh-Khoa and Nguyen, Duy-Tan and Khanh, Loi Nguyen},
+  year   = {2026},
+  note   = {Accepted at SoICT 2026}
+}</code></pre><p class="citation-note" data-i18n="citation_note">Minimal citation using currently confirmed public metadata. Update it when the camera-ready record is available.</p></section>
+      </div>
+    </section>
+  </main>
 
-    let currentLang = 'en';
-
-    function setLanguage(lang) {
-      if (!translations[lang]) return;
-      currentLang = lang;
-      document.documentElement.lang = lang;
-
-      // Cập nhật toàn bộ các thẻ có thuộc tính data-i18n
-      document.querySelectorAll('[data-i18n]').forEach(el => {
-        const key = el.getAttribute('data-i18n');
-        if (translations[lang][key] !== undefined) {
-          el.innerHTML = translations[lang][key];
-        }
-      });
-
-      // Cập nhật trạng thái nút EN / VI
-      document.getElementById('btn-en').classList.toggle('active', lang === 'en');
-      document.getElementById('btn-vi').classList.toggle('active', lang === 'vi');
-
-      // Lưu lựa chọn của người dùng
-      try {
-        localStorage.setItem('stagra_lang', lang);
-      } catch (e) {}
-    }
-
-    // Khởi tạo trạng thái ban đầu & Mobile navbar toggle
-    document.addEventListener('DOMContentLoaded', () => {
-      const $navbarBurgers = Array.prototype.slice.call(document.querySelectorAll('.navbar-burger'), 0);
-      $navbarBurgers.forEach(el => {
-        el.addEventListener('click', () => {
-          const target = el.dataset.target;
-          const $target = document.getElementById(target);
-          el.classList.toggle('is-active');
-          $target.classList.toggle('is-active');
-        });
-      });
-
-      // Tự động đóng menu mobile sau khi bấm vào 1 mục
-      document.querySelectorAll('#navMenu .navbar-item').forEach(item => {
-        item.addEventListener('click', () => {
-          const burger = document.querySelector('.navbar-burger');
-          const menu = document.getElementById('navMenu');
-          if (burger && menu.classList.contains('is-active')) {
-            burger.classList.remove('is-active');
-            menu.classList.remove('is-active');
-          }
-        });
-      });
-
-      // Hỗ trợ mở trực tiếp qua URL ?lang=vi hoặc khôi phục từ localStorage
-      const urlParams = new URLSearchParams(window.location.search);
-      const paramLang = urlParams.get('lang');
-      let savedLang = null;
-      try {
-        savedLang = localStorage.getItem('stagra_lang');
-      } catch (e) {}
-
-      if (paramLang === 'vi' || paramLang === 'en') {
-        setLanguage(paramLang);
-      } else if (savedLang === 'vi' || savedLang === 'en') {
-        setLanguage(savedLang);
-      }
-    });
-
-    // Copy BibTeX helper
-    function copyBibtex() {
-      const text = document.getElementById('bibtexCode').innerText;
-      navigator.clipboard.writeText(text).then(() => {
-        const btnText = document.getElementById('copyBtnText');
-        btnText.innerText = currentLang === 'vi' ? 'Đã sao chép!' : 'Copied!';
-        setTimeout(() => { btnText.innerText = 'Copy BibTeX'; }, 2000);
-      });
-    }
-  </script>
-
+  <footer class="site-footer"><div class="shell footer-grid"><div class="footer-brand"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span><strong>StaGra</strong><p data-i18n="footer_tagline">Statistical modeling. Graph-based refinement. Per volume.</p></div><div class="footer-attribution"><p><span data-i18n="attribution_before">Website template adapted from the</span> <a href="https://nerfies.github.io/" target="_blank" rel="noopener noreferrer">Nerfies project page</a> <span data-i18n="attribution_after">by Keunhong Park and collaborators.</span></p><p><span data-i18n="license_before">Licensed under</span> <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener noreferrer">CC BY-SA 4.0</a>.</p></div><a class="back-to-top" href="#top"><span data-i18n="back_top">Back to top</span><b aria-hidden="true">↑</b></a></div></footer>
+  <noscript><div class="noscript-note">JavaScript is disabled. Core research content remains available; interactive controls require JavaScript.</div></noscript>
 </body>
 </html>
