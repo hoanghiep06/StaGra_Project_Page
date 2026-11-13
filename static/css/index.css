@@ -134,3 +134,38 @@ pre#bibtexCode {
     font-size: 1.75rem !important;
   }
 }
+
+
+/* Language Switcher Pill */
+.lang-switcher {
+  display: inline-flex;
+  align-items: center;
+  background-color: #e2e8f0;
+  border-radius: 999px;
+  padding: 2px;
+  margin-left: 0.5rem;
+}
+
+.lang-btn {
+  border: none;
+  background: transparent;
+  color: #475569;
+  font-family: 'Google Sans', 'Noto Sans', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  line-height: 1.2;
+}
+
+.lang-btn:hover {
+  color: #1e293b;
+}
+
+.lang-btn.active {
+  background-color: #2563eb;
+  color: #ffffff;
+  box-shadow: 0 1px 4px rgba(37, 99, 235, 0.35);
+}
